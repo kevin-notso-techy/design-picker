@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WebbROI Design Picker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@600;700&family=Playfair+Display:wght@600;700&family=Fraunces:opsz,wght@9..144,600&family=Work+Sans:wght@400;600&family=Instrument+Serif&family=DM+Serif+Display&family=DM+Sans:wght@400;600&family=Archivo:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2b313d;
+  --ink:#e8eaed; --dim:#9aa3b2; --accent:#5b9cff; --good:#3ecf8e;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:14px;line-height:1.5}
+header{padding:22px 28px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;position:sticky;top:0;background:rgba(15,17,21,.94);backdrop-filter:blur(8px);z-index:20}
+header h1{font-size:17px;margin:0;font-weight:700;letter-spacing:-.01em}
+header p{margin:0;color:var(--dim);font-size:13px}
+.wrap{display:grid;grid-template-columns:1fr 420px;gap:0;align-items:start}
+main{padding:24px 28px 100px;min-width:0}
+aside{position:sticky;top:69px;height:calc(100vh - 69px);border-left:1px solid var(--line);background:var(--panel);padding:20px;overflow:auto}
+section{margin-bottom:34px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim);margin:0 0 4px;font-weight:600}
+.hint{color:var(--dim);font-size:12.5px;margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px;cursor:pointer;transition:.12s;position:relative}
+.card:hover{border-color:#3d4757;transform:translateY(-1px)}
+.card.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.card.sel::after{content:"✓";position:absolute;top:9px;right:11px;color:var(--accent);font-weight:700;font-size:13px}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--accent);letter-spacing:.02em}
+.name{font-weight:600;font-size:13.5px;margin:2px 0 3px}
+.desc{color:var(--dim);font-size:12px;line-height:1.4}
+.mock{background:#fff;border-radius:6px;height:74px;margin-bottom:10px;overflow:hidden;position:relative;border:1px solid #e6e6e6}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:7px 13px;cursor:pointer;font-size:12.5px;transition:.12s;user-select:none}
+.chip:hover{border-color:#3d4757}
+.chip.sel{background:var(--accent);border-color:var(--accent);color:#06101f;font-weight:600}
+.chip .n{opacity:.65;font-size:11px;margin-left:5px}
+.pal{display:flex;height:34px;border-radius:6px;overflow:hidden;margin-bottom:10px;border:1px solid var(--line)}
+.pal i{flex:1}
+.pal i:first-child{flex:2}
+label.f{display:block;margin-bottom:12px}
+label.f span{display:block;font-size:12px;color:var(--dim);margin-bottom:5px}
+input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:7px;padding:9px 11px;font-size:13px;font-family:inherit}
+input[type=text]:focus{outline:none;border-color:var(--accent)}
+input.ref{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+input[type=color]{width:44px;height:32px;padding:0;border:1px solid var(--line);border-radius:6px;background:var(--panel2);cursor:pointer;vertical-align:middle}
+textarea{width:100%;height:250px;background:#0b0d11;border:1px solid var(--line);color:#cfe3ff;border-radius:8px;padding:13px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;line-height:1.55;resize:vertical}
+.wirehead{display:flex;align-items:center;justify-content:space-between;margin:18px 0 8px;padding-top:16px;border-top:1px solid var(--line)}
+.wirehead h3{margin:0;font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim);font-weight:600}
+.seg{display:flex;gap:4px}
+.seg div{padding:4px 9px;font-size:11.5px;border-radius:5px;background:var(--panel2);border:1px solid var(--line);cursor:pointer}
+.seg div.on{background:var(--accent);color:#06101f;border-color:var(--accent);font-weight:600}
+.frame{border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#0b0d11}
+.framebar{height:20px;background:#12151c;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 8px;gap:4px}
+.framebar i{width:6px;height:6px;border-radius:99px;background:#39404e;display:block}
+.scroller{max-height:560px;overflow:auto;display:flex;justify-content:center;background:#0b0d11;padding:0}
+.scroller::-webkit-scrollbar{width:8px}.scroller::-webkit-scrollbar-thumb{background:#2b313d;border-radius:4px}
+.wirenote{color:var(--dim);font-size:11.5px;margin:8px 0 0}
+.empty{padding:38px 18px;text-align:center;color:var(--dim);font-size:12.5px;line-height:1.6}
+.btnrow{display:flex;gap:8px;margin:12px 0}
+button{background:var(--accent);color:#06101f;border:0;border-radius:7px;padding:9px 15px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit}
+button.alt{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
+button:hover{filter:brightness(1.08)}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tab{padding:6px 11px;border-radius:6px;background:var(--panel2);border:1px solid var(--line);cursor:pointer;font-size:12px}
+.tab.on{background:var(--accent);color:#06101f;border-color:var(--accent);font-weight:600}
+.warn{background:#2a2113;border:1px solid #5c4a1e;color:#f0d69a;border-radius:8px;padding:10px 12px;font-size:12.5px;margin-top:12px;display:none}
+.warn.show{display:block}
+.info{background:#141c2b;border:1px solid #2b3d5c;color:#b8cbe8;border-radius:8px;padding:10px 12px;font-size:12.5px;margin-top:10px;display:none}
+.info.show{display:block}
+.info b{color:#dce8f8}
+.miss{color:#ff9b9b}
+@media(max-width:1080px){.wrap{grid-template-columns:1fr}aside{position:static;height:auto;border-left:0;border-top:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <h1>WebbROI Design Picker</h1>
+  <p>Click a preset in each group → copy the prompt block → paste into Kimi or Claude. No vague prompts.</p>
+</header>
+<div class="wrap">
+<main>
+
+  <section>
+    <h2>Reference sites <span style="text-transform:none;letter-spacing:0;font-weight:400">— all optional</span></h2>
+    <p class="hint">Sites you or the client like the feel of. These go into the prompt as direction to
+      take inspiration from, with an explicit instruction not to clone them.</p>
+    <div style="display:grid;gap:10px">
+      <input type="text" class="ref" id="r1" placeholder="https://…">
+      <input type="text" class="ref" id="r2" placeholder="https://…">
+      <input type="text" class="ref" id="r3" placeholder="https://…">
+    </div>
+  </section>
+
+  <section>
+    <h2>Project</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <label class="f"><span>Client name</span><input type="text" id="cname" placeholder="Closet Captain"></label>
+      <label class="f"><span>Industry</span><input type="text" id="cind" placeholder="closet & interior door installer"></label>
+      <label class="f"><span>Location</span><input type="text" id="cloc" placeholder="Orange County, CA"></label>
+    </div>
+    <label class="f"><span>What they actually sell, in one line — the model cannot guess this from the name</span>
+      <input type="text" id="cwhat" placeholder="fire sprinkler design, inspection and retrofit for commercial buildings"></label>
+  </section>
+
+  <section id="s-nav"></section>
+  <section id="s-hero"></section>
+  <section id="s-type"></section>
+  <section id="s-pal"></section>
+  <section id="s-btn"></section>
+
+  <section>
+    <h2>Sections — home page, in order</h2>
+    <p class="hint">Click to add. Click again to remove. The number is the position on the page.</p>
+    <div class="chips" id="s-sec"></div>
+  </section>
+
+  <section>
+    <h2>Feel</h2>
+    <p class="hint">Density, corners, motion, depth, imagery.</p>
+    <div id="s-scale"></div>
+  </section>
+
+</main>
+
+<aside>
+  <div class="wirehead" style="margin:0 0 8px;padding-top:0;border-top:0">
+    <h3>Page preview</h3>
+    <div class="seg" id="vw">
+      <div class="on" data-vw="d">Desktop</div>
+      <div data-vw="m">Mobile</div>
+    </div>
+  </div>
+  <div class="frame">
+    <div class="framebar"><i></i><i></i><i></i></div>
+    <div class="scroller"><div id="wire"></div></div>
+  </div>
+  <p class="wirenote">Grey blocks are images. Section order follows the order you clicked them.</p>
+
+  <div class="warn" id="warn"></div>
+  <div class="info" id="info"></div>
+
+  <div class="wirehead"><h3>Prompt</h3></div>
+  <div class="tabs">
+    <div class="tab on" data-t="spec">Spec block</div>
+    <div class="tab" data-t="build">Full build prompt</div>
+    <div class="tab" data-t="rev">Revision</div>
+  </div>
+  <label id="inlinewrap" style="display:flex;gap:7px;align-items:center;color:var(--dim);font-size:12px;margin:-2px 0 9px;cursor:pointer">
+    <input type="checkbox" id="inline" checked style="accent-color:var(--accent);width:14px;height:14px">
+    Include code definitions, so the prompt works on its own
+  </label>
+  <textarea id="out" readonly></textarea>
+  <div class="btnrow">
+    <button onclick="copyOut()">Copy</button>
+    <button class="alt" onclick="dl()">Download design-spec.md</button>
+    <button class="alt" onclick="reset()">Reset</button>
+  </div>
+</aside>
+</div>
+
+<script>
+const D = {
+ nav:{title:"Navigation",hint:"How the top of every page behaves.",items:[
+  ["NAV-A","Logo left, links right","Safe default. Trades, professional services.","navA"],
+  ["NAV-B","Centered logo, split links","Luxury, real estate, boutique. Needs a wide logo.","navB"],
+  ["NAV-C","Logo + hamburger only","Editorial, portfolio. Very clean, riskier for conversion.","navC"],
+  ["NAV-D","Transparent over hero","Solidifies on scroll. Adds polish to big-image heroes.","navD"],
+  ["NAV-E","Sticky bar + CTA pill","Lead-gen priority. Quote and booking businesses.","navE"],
+  ["NAV-F","Vertical left rail","Portfolios, architecture, catalogs. Desktop-heavy.","navF"]]},
+ hero:{title:"Hero — the first screen",hint:"The single biggest driver of how the site 'feels'.",items:[
+  ["HERO-A","Full-bleed image + overlay","When the client has one great photo.","heA"],
+  ["HERO-B","Split 50/50 copy + image","Balanced. Best when the copy has to work.","heB"],
+  ["HERO-C","Video background","Only with real footage. Never stock-looking.","heC"],
+  ["HERO-D","Type-only, deep whitespace","For clients who say 'too busy'. Editorial, high-end.","heD"],
+  ["HERO-E","Carousel / slider","Multiple product lines. Hurts speed and focus.","heE"],
+  ["HERO-F","Image + inline quote form","Lead capture above the fold. Converts best.","heF"]]},
+ type:{title:"Type pairing",hint:"All Google Fonts, self-hosted in Astro.",items:[
+  ["TYPE-1","Playfair Display + Inter","Luxury, real estate, established.","tp","'Playfair Display',serif"],
+  ["TYPE-2","Fraunces + Work Sans","Warm, artisan, craft trades.","tp","Fraunces,serif"],
+  ["TYPE-3","Instrument Serif + Geist","Modern editorial, agency.","tp","'Instrument Serif',serif"],
+  ["TYPE-4","Inter Tight + Inter","Clean corporate, tech, medical.","tp","'Inter Tight',sans-serif"],
+  ["TYPE-5","DM Serif Display + DM Sans","Approachable professional services.","tp","'DM Serif Display',serif"],
+  ["TYPE-6","Archivo + Archivo","Bold industrial, construction, supply.","tp","Archivo,sans-serif"]]},
+ pal:{title:"Palette",hint:"Base / ink / accent. You can override the accent below the grid.",items:[
+  ["PAL-LUXE","Luxe warm","Real estate, luxury services.","pl","#FAF8F5|#1C1A17|#B08D57"],
+  ["PAL-COASTAL","Coastal","Coastal RE, hospitality, wellness.","pl","#FBFCFC|#0F2A43|#5E9CA8"],
+  ["PAL-CLINICAL","Clinical bright","Medical, dental, IT, corporate, professional services.","pl","#FFFFFF|#152238|#1F7AE0"],
+  ["PAL-EARTH","Earth trade","Tile, stone, wood, closets, contractors.","pl","#F6F2EA|#26211C|#B4552D"],
+  ["PAL-MONO","Mono editorial","When they say 'white space and clean lines'.","pl","#FFFFFF|#111111|#444444"],
+  ["PAL-DARK","Dark premium","Studios, high-ticket, portfolio.","pl","#0E0E10|#F2F2F0|#C9A227"],
+  ["PAL-FOREST","Forest","Landscaping, sustainability, outdoor.","pl","#F7F8F5|#16261C|#3E7A52"]]},
+ btn:{title:"Buttons",hint:"Small choice, big tonal effect.",items:[
+  ["BTN-A","Sharp rectangle, solid","Industrial, technical, no-nonsense.","bt","0"],
+  ["BTN-B","Pill, solid","Friendly, modern, consumer.","bt","99px"],
+  ["BTN-C","6px radius, solid","Neutral default. Safe everywhere.","bt","6px"],
+  ["BTN-D","Outline / ghost","Secondary actions, minimal designs.","bt","6px|ghost"],
+  ["BTN-E","Text link + arrow","Editorial, luxury. Low emphasis.","bt","0|text"]]}
+};
+const SEC = [["SEC-services3","3-up service grid"],["SEC-alt","Alternating image/text"],["SEC-stats","Stat band"],
+ ["SEC-logos","Logo strip"],["SEC-testi","Testimonials"],["SEC-process","Process steps"],["SEC-gallery","Masonry gallery"],
+ ["SEC-faq","FAQ accordion"],["SEC-team","Team / bios"],["SEC-map","Map + contact"],["SEC-cta","Full-width CTA band"],
+ ["SEC-feature","Feature spotlight"],["SEC-compare","Comparison table"]];
+const SCALE = [
+ ["DEN","Density",[["DEN-1","Compact"],["DEN-2","Balanced"],["DEN-3","Airy"]]],
+ ["RAD","Corners",[["RAD-0","Sharp"],["RAD-1","Soft 6–8px"],["RAD-2","Round 16px+"]]],
+ ["MO","Motion",[["MO-0","None"],["MO-1","Subtle"],["MO-2","Expressive"]]],
+ ["SHAD","Depth",[["SHAD-0","Flat"],["SHAD-1","Subtle shadow"],["SHAD-2","Layered"]]],
+ ["IMG","Imagery",[["IMG-real","Real photos only"],["IMG-mixed","Real + stock"],["IMG-stock","Stock (temporary)"],["IMG-ai","AI placeholder"]]]
+];
+const S={nav:null,hero:null,type:null,pal:null,btn:null,sec:[],DEN:null,RAD:null,MO:null,SHAD:null,IMG:null,accent:null,ov:{},adopted:new Set()};
+
+function mock(kind,extra){
+  const g='#c9ced6',d='#2a2f38';
+  const bar=(c)=>`<div style="position:absolute;top:0;left:0;right:0;height:15px;background:${c};display:flex;align-items:center;padding:0 8px;gap:5px"></div>`;
+  const dot=`<div style="width:16px;height:5px;background:${d};border-radius:2px"></div>`;
+  const lnk=`<div style="width:12px;height:3px;background:${g};border-radius:2px"></div>`;
+  switch(kind){
+    case'navA':return `<div style="position:absolute;inset:0"><div style="height:16px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;padding:0 8px">${dot}<div style="display:flex;gap:4px">${lnk}${lnk}${lnk}</div></div><div style="padding:10px 8px"><div style="height:6px;width:60%;background:#dfe3e8;border-radius:2px;margin-bottom:5px"></div><div style="height:4px;width:40%;background:#eceff2;border-radius:2px"></div></div></div>`;
+    case'navB':return `<div style="position:absolute;inset:0"><div style="height:22px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:center;gap:8px">${lnk}${lnk}${dot}${lnk}${lnk}</div><div style="padding:10px 8px"><div style="height:6px;width:50%;background:#dfe3e8;border-radius:2px;margin:0 auto"></div></div></div>`;
+    case'navC':return `<div style="position:absolute;inset:0"><div style="height:16px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;padding:0 8px">${dot}<div style="display:flex;flex-direction:column;gap:2px">${['','',''].map(()=>`<div style="width:10px;height:1.5px;background:${d}"></div>`).join('')}</div></div><div style="padding:12px 8px"><div style="height:8px;width:70%;background:#dfe3e8;border-radius:2px"></div></div></div>`;
+    case'navD':return `<div style="position:absolute;inset:0;background:linear-gradient(160deg,#6b7280,#374151)"><div style="height:16px;display:flex;align-items:center;justify-content:space-between;padding:0 8px"><div style="width:16px;height:5px;background:#fff;border-radius:2px"></div><div style="display:flex;gap:4px"><div style="width:12px;height:3px;background:rgba(255,255,255,.7);border-radius:2px"></div><div style="width:12px;height:3px;background:rgba(255,255,255,.7);border-radius:2px"></div></div></div><div style="padding:14px 8px"><div style="height:7px;width:65%;background:rgba(255,255,255,.9);border-radius:2px"></div></div></div>`;
+    case'navE':return `<div style="position:absolute;inset:0"><div style="height:18px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;padding:0 8px">${dot}<div style="display:flex;gap:4px;align-items:center">${lnk}${lnk}<div style="width:22px;height:9px;background:#1F7AE0;border-radius:99px"></div></div></div><div style="padding:10px 8px"><div style="height:6px;width:55%;background:#dfe3e8;border-radius:2px"></div></div></div>`;
+    case'navF':return `<div style="position:absolute;inset:0;display:flex"><div style="width:24px;border-right:1px solid #eee;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:5px">${dot}${lnk}${lnk}${lnk}</div><div style="flex:1;padding:10px 8px"><div style="height:7px;width:70%;background:#dfe3e8;border-radius:2px"></div></div></div>`;
+    case'heA':return `<div style="position:absolute;inset:0;background:linear-gradient(140deg,#8a939f,#4b5563);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px"><div style="height:7px;width:58%;background:rgba(255,255,255,.95);border-radius:2px"></div><div style="height:4px;width:38%;background:rgba(255,255,255,.6);border-radius:2px"></div><div style="height:9px;width:26%;background:#fff;border-radius:2px;margin-top:3px"></div></div>`;
+    case'heB':return `<div style="position:absolute;inset:0;display:flex"><div style="flex:1;padding:14px 9px;display:flex;flex-direction:column;gap:5px;justify-content:center"><div style="height:6px;width:85%;background:#d7dbe0;border-radius:2px"></div><div style="height:4px;width:65%;background:#e9ecef;border-radius:2px"></div><div style="height:8px;width:45%;background:#374151;border-radius:2px;margin-top:3px"></div></div><div style="flex:1;background:linear-gradient(140deg,#9aa3af,#6b7280)"></div></div>`;
+    case'heC':return `<div style="position:absolute;inset:0;background:linear-gradient(140deg,#4b5563,#111827);display:flex;align-items:center;justify-content:center"><div style="width:0;height:0;border-left:11px solid rgba(255,255,255,.9);border-top:7px solid transparent;border-bottom:7px solid transparent"></div></div>`;
+    case'heD':return `<div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 16px"><div style="width:100%"><div style="height:10px;width:88%;background:#22262c;border-radius:2px;margin-bottom:6px"></div><div style="height:10px;width:52%;background:#22262c;border-radius:2px"></div></div></div>`;
+    case'heE':return `<div style="position:absolute;inset:0;display:flex;gap:3px;padding:4px;align-items:center"><div style="width:8px;height:60%;background:#e5e7eb;border-radius:3px"></div><div style="flex:1;height:88%;background:linear-gradient(140deg,#9aa3af,#6b7280);border-radius:4px"></div><div style="width:8px;height:60%;background:#e5e7eb;border-radius:3px"></div></div>`;
+    case'heF':return `<div style="position:absolute;inset:0;background:linear-gradient(140deg,#8a939f,#4b5563);display:flex;align-items:center;padding:0 10px"><div style="background:#fff;border-radius:4px;padding:7px;width:56%;display:flex;flex-direction:column;gap:4px"><div style="height:4px;width:70%;background:#d7dbe0;border-radius:2px"></div><div style="height:7px;background:#f1f3f5;border-radius:2px"></div><div style="height:7px;background:#f1f3f5;border-radius:2px"></div><div style="height:8px;width:50%;background:#1F7AE0;border-radius:2px"></div></div></div>`;
+    case'tp':return `<div style="position:absolute;inset:0;padding:10px 11px;background:#fff"><div style="font-family:${extra};font-size:21px;color:#16181d;line-height:1.1">Aa</div><div style="font-family:Inter,sans-serif;font-size:9.5px;color:#6b7280;margin-top:3px">The quick brown fox jumps</div></div>`;
+    case'pl':{const[a,b,c]=extra.split('|');return `<div style="position:absolute;inset:0;display:flex"><div style="flex:2.2;background:${a}"></div><div style="flex:1;background:${b}"></div><div style="flex:1;background:${c}"></div></div><div style="position:absolute;bottom:4px;left:6px;font:600 7.6px ui-monospace,monospace;letter-spacing:-.2px;white-space:nowrap;color:${b==='#F2F2F0'||b==='#f2f2f0'?'#fff':'#111'};opacity:.6">${a} ${b} ${c}</div>`;}
+    case'bt':{const[r,v]=extra.split('|');
+      const style=v==='ghost'?`background:transparent;border:1.5px solid #1f2937;color:#1f2937`:v==='text'?`background:transparent;color:#1f2937;text-decoration:underline;text-underline-offset:3px`:`background:#1f2937;color:#fff;border:0`;
+      return `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#fff"><div style="${style};border-radius:${r};padding:8px 18px;font:600 11px Inter,sans-serif">Get a quote${v==='text'?' →':''}</div></div>`;}
+  }
+  return '';
+}
+
+function renderGroup(key){
+  const g=D[key],el=document.getElementById('s-'+key);
+  el.innerHTML=`<h2>${g.title}</h2><p class="hint">${g.hint}</p><div class="grid">`+
+    g.items.map(it=>`<div class="card" data-g="${key}" data-c="${it[0]}">
+      <div class="mock">${mock(it[3],it[4])}</div>
+      <div class="code">${it[0]}</div><div class="name">${it[1]}</div><div class="desc">${it[2]}</div></div>`).join('')+
+    `</div>`+(key==='pal'?`<div style="margin-top:12px;display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--dim)">
+      <span>Override accent:</span><input type="color" id="acc" value="#B08D57"><span id="accv" class="code">#B08D57</span>
+      <button class="alt" style="padding:5px 10px;font-size:12px" onclick="S.accent=null;render()">use preset accent</button></div>`:'');
+}
+
+function renderSec(){
+  document.getElementById('s-sec').innerHTML=SEC.map(s=>{
+    const i=S.sec.indexOf(s[0]);
+    return `<div class="chip ${i>-1?'sel':''}" data-sec="${s[0]}">${s[1]}<span class="n">${i>-1?i+1:s[0].replace('SEC-','')}</span></div>`;
+  }).join('');
+}
+function renderScale(){
+  document.getElementById('s-scale').innerHTML=SCALE.map(([k,label,opts])=>
+    `<div style="margin-bottom:14px"><div style="font-size:12px;color:var(--dim);margin-bottom:6px">${label}</div><div class="chips">`+
+    opts.map(o=>`<div class="chip ${S[k]===o[0]?'sel':''}" data-scale="${k}" data-v="${o[0]}">${o[1]}<span class="n">${o[0]}</span></div>`).join('')+
+    `</div></div>`).join('');
+}
+
+function palHex(){
+  if(S.ov.base) return {b:S.ov.base, i:S.ov.ink, a:S.accent||S.ov.accent};
+  if(!S.pal)return{b:'',i:'',a:''};
+  const it=D.pal.items.find(x=>x[0]===S.pal);const[b,i,a]=it[4].split('|');
+  return{b,i,a:S.accent||a};
+}
+function typeFonts(){
+  if(S.ov.display) return `${S.ov.display} + ${S.ov.body}`;
+  if(!S.type)return'';
+  return D.type.items.find(x=>x[0]===S.type)[1];
+}
+function typeFam(){
+  if(S.ov.display) return `'${S.ov.display}', Georgia, serif`;
+  return S.type?D.type.items.find(x=>x[0]===S.type)[4]:'Inter,sans-serif';
+}
+
+function refs(){
+  return ['r1','r2','r3'].map(i=>document.getElementById(i).value.trim()).filter(Boolean);
+}
+
+
+/* ---- what each code actually means, in build terms ---- */
+const DEF={
+'NAV-A':'Horizontal bar. Logo left, 3-5 text links right. Solid background, 1px bottom border. Hamburger under 768px.',
+'NAV-B':'Horizontal bar, logo centered, links split evenly either side. Solid background, 1px bottom border. Logo + hamburger under 900px.',
+'NAV-C':'Logo left, hamburger right at EVERY breakpoint including desktop. Menu opens as a full-screen overlay.',
+'NAV-D':'Fixed nav sitting transparent over the hero with light text; on scroll past the hero it gains a solid background and dark text.',
+'NAV-E':'Sticky bar, logo left, links right, ending in a filled accent CTA button. Stays visible on scroll.',
+'NAV-F':'Fixed vertical rail on the left ~220px wide: logo above stacked links. Content offset right. Becomes a top bar under 1024px.',
+'HERO-A':'Full-bleed background image, min-height 70vh, dark overlay ~40%, centered light headline + subhead + one primary CTA.',
+'HERO-B':'Two columns 50/50. Left: eyebrow, h1, subhead, CTA. Right: one image filling the section height. Stacks under 768px, text first.',
+'HERO-C':'Muted looping background video with a poster fallback, dark overlay, centered headline + CTA. Ship the poster first so the video never blocks LCP.',
+'HERO-D':'No hero image. Oversized h1 (clamp 40-88px), short subhead, one CTA, deep vertical padding. Whitespace carries it.',
+'HERO-E':'Slider, 3-5 slides, arrows + dots, autoplay OFF. Each slide is image + headline + CTA.',
+'HERO-F':'Background image with a card overlaid containing a short lead form (name, phone/email, one select) and a submit button.',
+'TYPE-1':'Headings Playfair Display 600/700. Body Inter 400/600.',
+'TYPE-2':'Headings Fraunces 600. Body Work Sans 400/600.',
+'TYPE-3':'Headings Instrument Serif 400. Body Geist 400/600.',
+'TYPE-4':'Headings Inter Tight 600/700. Body Inter 400/500.',
+'TYPE-5':'Headings DM Serif Display 400. Body DM Sans 400/600.',
+'TYPE-6':'Headings Archivo 700. Body Archivo 400/500.',
+'BTN-A':'Buttons: 0px radius, solid accent fill, label in the contrasting color.',
+'BTN-B':'Buttons: fully rounded pill (999px), solid accent fill.',
+'BTN-C':'Buttons: 6px radius, solid accent fill.',
+'BTN-D':'Buttons: transparent background, 1.5px accent border, accent label. Fills with accent on hover.',
+'BTN-E':'Buttons: no box. Accent text label with a trailing arrow, underline on hover.',
+'DEN-1':'Section padding 40-56px desktop, ~60% of that on mobile. Information-dense.',
+'DEN-2':'Section padding 72-88px desktop, ~60% of that on mobile.',
+'DEN-3':'Section padding 112-140px desktop, ~60% of that on mobile. Generous whitespace is the point.',
+'RAD-0':'Corner radius 0 on cards, images, inputs.',
+'RAD-1':'Corner radius 6-8px on cards, images, inputs.',
+'RAD-2':'Corner radius 16px+ on cards, images, inputs.',
+'MO-0':'No scroll animation.',
+'MO-1':'Fade + 8px rise on scroll into view, 200-300ms ease-out, once only. Honor prefers-reduced-motion.',
+'MO-2':'Parallax and staggered reveals. Keep it off the critical path; honor prefers-reduced-motion.',
+'SHAD-0':'No shadows anywhere. Separate surfaces with 1px borders.',
+'SHAD-1':'Subtle card shadow: 0 1px 3px rgba(0,0,0,.08).',
+'SHAD-2':'Layered elevation: 0 8px 24px rgba(0,0,0,.12) on cards and popovers.',
+'IMG-real':'Use only real client photography. Where a photo is missing, output a solid block with an HTML comment naming the shot needed.',
+'IMG-mixed':'Real client photos where supplied; tasteful licensed stock elsewhere. Mark every stock slot with an HTML comment.',
+'IMG-stock':'Licensed stock throughout, TEMPORARY. Mark every image slot with an HTML comment so it can be swapped later.',
+'IMG-ai':'AI-generated placeholders only, never final, never depicting identifiable people. Mark every slot with an HTML comment.',
+'SEC-services3':'Three-up service/product grid: icon or small image, h3, two lines of copy per card.',
+'SEC-alt':'Alternating image/text rows: image left + text right, then reversed. Each row has h3, a short paragraph, and a secondary link.',
+'SEC-stats':'Full-width band on the ink color with 3-5 large figures and a short label under each.',
+'SEC-logos':'Single row of 5-7 client or brand logos, greyscale, reduced opacity.',
+'SEC-testi':'Testimonial cards with quote text and attribution. REAL reviews only - if none are supplied, render an empty state and leave a comment; do not invent quotes.',
+'SEC-process':'Numbered steps (3-5), each with a circled number, h3 and one line. Horizontal on desktop, stacked on mobile.',
+'SEC-gallery':'Image grid, 2-3 columns, varied row heights, lightbox on click optional.',
+'SEC-faq':'Accordion of 4-8 questions using <details>/<summary>. First one open. Add FAQPage schema.',
+'SEC-team':'Team cards: circular portrait, name, role, one line of bio.',
+'SEC-map':'Two columns: embedded map left, address / hours / phone and a directions button right.',
+'SEC-cta':'Full-width band on the accent color: short headline and one button in the contrasting color.',
+'SEC-feature':'One feature spotlight: large image on one side, headline plus 3 bulleted points on the other.',
+'SEC-compare':'Comparison table, header row on the ink color, alternating row backgrounds, 3-4 columns.'
+};
+function defLines(){
+  const codes=[S.nav,S.hero,S.type,S.btn,S.DEN,S.RAD,S.MO,S.SHAD,S.IMG,...S.sec].filter(Boolean);
+  const seen=new Set(); const outl=[];
+  for(const c of codes){ if(seen.has(c)||!DEF[c])continue; seen.add(c); outl.push(`${c}: ${DEF[c]}`); }
+  const p=palHex();
+  if(p.b) outl.unshift(`${S.pal||'PAL'}: base ${p.b} is the page background; ink ${p.i} is headings and body text; accent ${p.a} is buttons, links and small emphasis ONLY - never more than ~10% of any screen. Body text must hit 4.5:1 contrast.`);
+  return outl;
+}
+
+let TAB='spec';
+let INLINE=true;
+function specBlock(){
+  const p=palHex();
+  const nm=v=>v||'⟨pick⟩';
+  const R=refs();
+  const ref=R.length?`\n# reference sites (inspiration, not to be copied): ${R.join('  ')}`:'';
+  return `NAV:   ${nm(S.nav)}
+HERO:  ${nm(S.hero)}
+TYPE:  ${nm(S.type)}${S.type||S.ov.display?'  ('+typeFonts()+')':''}
+PAL:   ${nm(S.pal)}   base ${p.b||'#______'}  ink ${p.i||'#______'}  accent ${p.a||'#______'}
+BTN:   ${nm(S.btn)}
+DEN:   ${nm(S.DEN)}   RAD: ${nm(S.RAD)}   MO: ${nm(S.MO)}   SHAD: ${nm(S.SHAD)}
+IMG:   ${nm(S.IMG)}
+SEC:   ${S.sec.length?S.sec.join(', '):'⟨pick sections⟩'}${ref}`;
+}
+function out(){
+  const c=document.getElementById('cname').value||'<Client>';
+  const ind=document.getElementById('cind').value||'<industry>';
+  const loc=document.getElementById('cloc').value||'<location>';
+  if(TAB==='spec')return `# Design Spec — ${c}\n\n\`\`\`\n${specBlock()}\n\`\`\`\n`;
+  if(TAB==='rev')return `Revision round <n>. Changes only:
+
+1. <file/section> — <exact change>
+2. <file/section> — <exact change>
+
+Design spec changes: <OLD> → <NEW>
+
+Nothing else changes. Do not refactor, do not "improve," do not touch files not listed.
+Output the changed files only. No summary.`;
+  const defs = INLINE ? `
+
+--- WHAT THE CODES MEAN (this is the whole codebook — you need no other file) ---
+${defLines().join('\n')}` : `
+
+Code definitions are in design-system/presets.md in this repo. Read it before building.`;
+  const R=refs();
+  const refblock = R.length ? `
+
+--- REFERENCE SITES (direction only — do NOT copy) ---
+Sites we like the feel of:
+${R.map((u,i)=>`${i+1}. ${u}`).join('\n')}
+Take inspiration from their proportions, spacing, hierarchy and overall mood. Do NOT reproduce their
+layout section-for-section, their copy, their imagery, their brand colors or their logo. Nothing on
+our site should be recognisable as having come from theirs. Where a reference and the design spec
+above disagree, the spec wins.` : '';
+  return `PROJECT: ${c} — ${ind}, ${loc}
+WHAT THEY DO: ${document.getElementById('cwhat').value||'⟨one line: what this business actually sells, and to whom⟩'}
+STACK: Astro, static, Cloudflare Pages. No React. Self-host fonts. WebP images with width/height.
+
+--- DESIGN SPEC (authoritative — do not improvise) ---
+${specBlock()}${defs}${refblock}
+
+--- COPY ---
+Use copy.md verbatim where it exists. Elsewhere write placeholder copy and mark it
+<!-- PLACEHOLDER --> in the source. Do NOT invent testimonials, review counts, awards,
+years in business, or client names. If a section needs social proof I don't have,
+build it as an empty state.
+
+--- MUST NOT ---
+No stock-photo people (use a solid block with a filename comment where a real photo goes).
+No lorem ipsum. No fabricated business facts. No chat widgets or third-party scripts.
+
+--- QUALITY BAR ---
+Mobile PageSpeed 90+. Semantic HTML, correct h1/h2 hierarchy, alt text on every image.
+LocalBusiness schema in head. sitemap.xml, robots.txt, llms.txt.
+
+--- BEHAVIOR ---
+If something is ambiguous, pick the option most consistent with the design spec above,
+note it in one line at the end, and keep going. Do not stop to ask.`;
+}
+function checkWarn(){
+  const w=document.getElementById('warn');const msgs=[];
+  const missing=['nav','hero','type','pal','btn','DEN','RAD','MO','SHAD','IMG'].filter(k=>!S[k]);
+  if(missing.length)msgs.push(`<span class="miss">Still unpicked:</span> ${missing.length} group${missing.length>1?'s':''}.`);
+  if(!S.sec.length)msgs.push(`<span class="miss">No sections picked.</span>`);
+  if(S.IMG==='IMG-stock'||S.IMG==='IMG-ai')msgs.push(`Placeholder imagery — add "replace with real photos" to Phase 7 open items (R12).`);
+  if(S.sec.includes('SEC-testi'))msgs.push(`Testimonials selected — confirm <b>real</b> reviews exist before build. Never ship placeholders (R6).`);
+  if(S.MO==='MO-2')msgs.push(`Expressive motion costs PageSpeed. We sell speed — justify it.`);
+  if(TAB==='build'&&!document.getElementById('cwhat').value.trim())
+    msgs.push(`<span class="miss">"What they actually sell" is empty.</span> A name like "South Bay Fire Co." reads as a fire-protection contractor, a wood-fired restaurant or a ceramics studio — the codes won't disambiguate it.`);
+  w.className=msgs.length?'warn show':'warn';w.innerHTML=msgs.join('<br>');
+
+  const inf=document.getElementById('info');const notes=[];
+  if(S.pal&&S.type){
+    const pp=D.pal.items.find(x=>x[0]===S.pal), t=D.type.items.find(x=>x[0]===S.type);
+    const ind=document.getElementById('cind').value.trim();
+    notes.push(`<b>Read check.</b> ${S.pal} is conventional for: ${pp[2].replace(/\.$/,'')}. ${S.type} reads: ${t[2].replace(/\.$/,'')}.`);
+    notes.push(ind
+      ? `Does that land where you want for <b>${ind}</b>? Matching the convention is the safe choice; breaking it is fine if it's on purpose.`
+      : `Fill in the Industry field and this check gets more useful.`);
+  }
+  inf.className=notes.length?'info show':'info';inf.innerHTML=notes.join('<br>');
+}
+
+/* ---------------- WIREFRAME PREVIEW ---------------- */
+let VW='d';
+function hx(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');
+  return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function mix(a,b,t){const A=hx(a),B=hx(b);
+  return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('');}
+function lum(c){const[r,g,b]=hx(c).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});
+  return .2126*r+.7152*g+.0722*b;}
+function on(c){return lum(c)>.45?'#111111':'#ffffff';}
+
+function V(){
+  const p=palHex();
+  const base=p.b||'#FFFFFF', ink=p.i||'#111111', acc=p.a||'#9AA3B2';
+  const tf=typeFam();
+  const W=VW==='d'?378:210;
+  const k=VW==='d'?1:.72;                                  // mobile shrink factor
+  const pad=({'DEN-1':14,'DEN-2':24,'DEN-3':38}[S.DEN]||24)*k;
+  const rad=({'RAD-0':0,'RAD-1':5,'RAD-2':12}[S.RAD]||5)+'px';
+  const btnr=({'BTN-A':'0','BTN-B':'99px','BTN-C':'5px','BTN-D':'5px','BTN-E':'0'})[S.btn]||'5px';
+  const sh=({'SHAD-0':'none','SHAD-1':'0 1px 4px rgba(0,0,0,.14)','SHAD-2':'0 6px 16px rgba(0,0,0,.22)'})[S.SHAD]||'none';
+  const brd=(S.SHAD==='SHAD-0'||!S.SHAD)?`1px solid ${mix(base,ink,.13)}`:'1px solid transparent';
+  return {base,ink,acc,tf,W,k,pad,rad,btnr,sh,brd,
+    surf:mix(base,ink,.045), line:mix(base,ink,.12), imgc:mix(base,ink,.19),
+    dim:mix(base,ink,.45), gut:VW==='d'?20:12};
+}
+// primitives
+function bar(v,w,h,c,mt){return `<div style="height:${h}px;width:${w};background:${c||v.dim};border-radius:2px;${mt?'margin-top:'+mt+'px':''}"></div>`;}
+function img(v,h,r){return `<div style="height:${h}px;background:${v.imgc};border-radius:${r??v.rad};position:relative;overflow:hidden">
+  <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent,transparent 6px,${mix(v.imgc,v.ink,.06)} 6px,${mix(v.imgc,v.ink,.06)} 7px)"></div></div>`;}
+function btn(v,label,small){
+  const h=small?9:11, fs=small?6.5:7.5;
+  if(S.btn==='BTN-E')return `<span style="color:${v.acc};font:600 ${fs}px Inter,sans-serif;text-decoration:underline;text-underline-offset:2px">${label} →</span>`;
+  if(S.btn==='BTN-D')return `<span style="display:inline-block;border:1px solid ${v.acc};color:${v.acc};border-radius:${v.btnr};padding:${h*.45}px ${h}px;font:600 ${fs}px Inter,sans-serif">${label}</span>`;
+  return `<span style="display:inline-block;background:${v.acc};color:${on(v.acc)};border-radius:${v.btnr};padding:${h*.45}px ${h}px;font:600 ${fs}px Inter,sans-serif">${label}</span>`;
+}
+function head(v,txt,size){return `<div style="font-family:${v.tf};color:${v.ink};font-size:${size}px;line-height:1.15;letter-spacing:-.01em">${txt}</div>`;}
+function eyebrow(v,t){return `<div style="font:600 6px Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:${v.acc};margin-bottom:5px">${t}</div>`;}
+function sect(v,inner,bg){return `<div style="padding:${v.pad}px ${v.gut}px;background:${bg||v.base}">${inner}</div>`;}
+function card(v,inner,padding){return `<div style="background:${v.surf};border:${v.brd};box-shadow:${v.sh};border-radius:${v.rad};padding:${padding??8}px">${inner}</div>`;}
+
+function wireNav(v){
+  const L=`<div style="display:flex;gap:${v.gut*.35}px">${[1,2,3].map(()=>bar(v,'16px',3,v.dim)).join('')}</div>`;
+  const logo=(c)=>`<div style="font-family:${v.tf};font-size:9px;color:${c||v.ink};font-weight:700">LOGO</div>`;
+  const wrap=(inner,bg,bb)=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px ${v.gut}px;background:${bg||v.base};${bb?`border-bottom:1px solid ${v.line}`:''}">${inner}</div>`;
+  switch(S.nav){
+    case'NAV-B':return `<div style="display:flex;align-items:center;justify-content:center;gap:${v.gut*.4}px;padding:9px ${v.gut}px;border-bottom:1px solid ${v.line};background:${v.base}">${bar(v,'14px',3)}${bar(v,'14px',3)}${logo()}${bar(v,'14px',3)}${bar(v,'14px',3)}</div>`;
+    case'NAV-C':return wrap(`${logo()}<div style="display:flex;flex-direction:column;gap:2px">${[1,2,3].map(()=>`<div style="width:11px;height:1.5px;background:${v.ink}"></div>`).join('')}</div>`,null,1);
+    case'NAV-D':return '';   // drawn inside the hero
+    case'NAV-E':return wrap(`${logo()}<div style="display:flex;align-items:center;gap:7px">${bar(v,'14px',3)}${bar(v,'14px',3)}${btn(v,'Get a quote',1)}</div>`,null,1);
+    case'NAV-F':return '';   // drawn as a rail around the page
+    default:return wrap(`${logo()}${L}`,null,1);
+  }
+}
+function wireHero(v){
+  const H=VW==='d'?128:104;
+  const overlayNav=S.nav==='NAV-D'?`<div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:8px ${v.gut}px;z-index:2">
+      <div style="font-family:${v.tf};font-size:9px;color:#fff;font-weight:700">LOGO</div>
+      <div style="display:flex;gap:7px">${[1,2,3].map(()=>`<div style="width:16px;height:3px;background:rgba(255,255,255,.75);border-radius:2px"></div>`).join('')}</div></div>`:'';
+  const shot=(inner,h)=>`<div style="position:relative;height:${h||H}px;background:${v.imgc};overflow:hidden">
+    <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent,transparent 7px,${mix(v.imgc,v.ink,.06)} 7px,${mix(v.imgc,v.ink,.06)} 8px)"></div>${overlayNav}${inner}</div>`;
+  switch(S.hero){
+    case'HERO-B':return `<div style="display:flex;background:${v.base};min-height:${H}px">
+      <div style="flex:1;padding:${v.pad*.8}px ${v.gut}px;display:flex;flex-direction:column;justify-content:center;gap:6px">
+        ${eyebrow(v,'Since 1998')}${head(v,'A headline that<br>does the work',VW==='d'?15:12)}
+        ${bar(v,'80%',3.5,v.dim,6)}${bar(v,'60%',3.5,v.dim,3)}<div style="margin-top:8px">${btn(v,'Get a quote')}</div></div>
+      <div style="flex:1;background:${v.imgc};position:relative;overflow:hidden">
+        <div style="position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent,transparent 7px,${mix(v.imgc,v.ink,.06)} 7px,${mix(v.imgc,v.ink,.06)} 8px)"></div>${overlayNav}</div></div>`;
+    case'HERO-C':return shot(`<div style="position:absolute;inset:0;background:rgba(0,0,0,.42);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px">
+      <div style="width:0;height:0;border-left:14px solid rgba(255,255,255,.92);border-top:9px solid transparent;border-bottom:9px solid transparent"></div>
+      <div style="font-family:${v.tf};color:#fff;font-size:${VW==='d'?13:11}px">Watch how we work</div></div>`);
+    case'HERO-D':return `<div style="background:${v.base};padding:${v.pad*1.5}px ${v.gut}px">
+      ${head(v,'The kind of headline<br>that needs no picture.',VW==='d'?20:15)}
+      ${bar(v,'55%',3.5,v.dim,10)}<div style="margin-top:12px">${btn(v,'See our work')}</div></div>`;
+    case'HERO-E':return `<div style="display:flex;gap:5px;align-items:center;padding:0 6px;background:${v.base}">
+      <div style="width:9px;height:${H*.5}px;background:${v.surf};border:${v.brd};border-radius:${v.rad}"></div>
+      <div style="flex:1">${shot(`<div style="position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;gap:4px">${[1,2,3].map((_,i)=>`<div style="width:${i===0?10:4}px;height:4px;border-radius:99px;background:${i===0?'#fff':'rgba(255,255,255,.5)'}"></div>`).join('')}</div>`,H*.86)}</div>
+      <div style="width:9px;height:${H*.5}px;background:${v.surf};border:${v.brd};border-radius:${v.rad}"></div></div>`;
+    case'HERO-F':return shot(`<div style="position:absolute;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;padding:0 ${v.gut}px">
+      <div style="background:${v.base};border-radius:${v.rad};box-shadow:0 4px 14px rgba(0,0,0,.25);padding:9px;width:${VW==='d'?'62%':'80%'}">
+        ${head(v,'Get a free quote',VW==='d'?10:9)}
+        <div style="height:11px;background:${v.surf};border:${v.brd};border-radius:3px;margin-top:6px"></div>
+        <div style="height:11px;background:${v.surf};border:${v.brd};border-radius:3px;margin-top:4px"></div>
+        <div style="margin-top:7px">${btn(v,'Send',1)}</div></div></div>`,H*1.15);
+    default:return shot(`<div style="position:absolute;inset:0;background:rgba(0,0,0,.38);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:0 ${v.gut}px;text-align:center">
+      <div style="font-family:${v.tf};color:#fff;font-size:${VW==='d'?16:13}px;line-height:1.15">Built right, the first time</div>
+      <div style="width:52%;height:3.5px;background:rgba(255,255,255,.6);border-radius:2px"></div>
+      <div style="margin-top:5px">${btn(v,'Get a quote')}</div></div>`);
+  }
+}
+const SECR={
+ 'SEC-services3':v=>sect(v,`${eyebrow(v,'What we do')}${head(v,'Services',VW==='d'?13:11)}
+   <div style="display:${VW==='d'?'grid':'flex'};${VW==='d'?`grid-template-columns:repeat(3,1fr);gap:7px`:'flex-direction:column;gap:6px'};margin-top:10px">
+   ${[1,2,3].map(()=>card(v,`<div style="width:14px;height:14px;border-radius:${v.rad};background:${v.acc};opacity:.85"></div>
+     ${bar(v,'70%',4,v.ink,7)}${bar(v,'100%',3,v.dim,4)}${bar(v,'85%',3,v.dim,3)}`)).join('')}</div>`),
+ 'SEC-alt':v=>sect(v,[0,1].map(i=>`<div style="display:flex;flex-direction:${VW==='m'?'column':(i?'row-reverse':'row')};gap:10px;align-items:center;${i?'margin-top:14px':''}">
+   <div style="flex:1;width:100%">${img(v,VW==='d'?58:52)}</div>
+   <div style="flex:1;width:100%">${head(v,i?'Built to last':'Made to measure',VW==='d'?11:10)}${bar(v,'100%',3,v.dim,6)}${bar(v,'90%',3,v.dim,3)}${bar(v,'60%',3,v.dim,3)}
+   <div style="margin-top:7px">${btn(v,'Learn more',1)}</div></div></div>`).join('')),
+ 'SEC-stats':v=>sect(v,`<div style="display:flex;justify-content:space-between;gap:6px">
+   ${['12k','98%','25','4.9'].map(n=>`<div style="flex:1;text-align:center"><div style="font-family:${v.tf};font-size:${VW==='d'?15:12}px;color:${on(v.ink)==='#ffffff'?v.acc:v.acc}">${n}</div>
+   <div style="height:3px;width:70%;margin:5px auto 0;background:${mix(v.ink,v.base,.55)};border-radius:2px"></div></div>`).join('')}</div>`,v.ink),
+ 'SEC-logos':v=>sect(v,`<div style="display:flex;gap:6px;align-items:center;justify-content:space-between;opacity:.6">
+   ${[1,2,3,4,5].map(()=>`<div style="flex:1;height:12px;background:${v.imgc};border-radius:${v.rad}"></div>`).join('')}</div>`,v.surf),
+ 'SEC-testi':v=>sect(v,`${head(v,'What clients say',VW==='d'?13:11)}
+   <div style="display:${VW==='d'?'grid':'flex'};${VW==='d'?'grid-template-columns:1fr 1fr;gap:7px':'flex-direction:column;gap:6px'};margin-top:9px">
+   ${[1,2].map(()=>card(v,`<div style="font-family:${v.tf};font-size:14px;color:${v.acc};line-height:.9">"</div>
+     ${bar(v,'100%',3,v.dim,4)}${bar(v,'92%',3,v.dim,3)}${bar(v,'45%',3,v.ink,7)}`)).join('')}</div>`,v.surf),
+ 'SEC-process':v=>sect(v,`${head(v,'How it works',VW==='d'?13:11)}
+   <div style="display:flex;flex-direction:${VW==='d'?'row':'column'};gap:8px;margin-top:10px">
+   ${[1,2,3,4].map(n=>`<div style="flex:1;display:flex;${VW==='m'?'gap:7px;align-items:center':'flex-direction:column'}">
+     <div style="width:15px;height:15px;border-radius:99px;background:${v.acc};color:${on(v.acc)};font:700 7px Inter,sans-serif;display:flex;align-items:center;justify-content:center;flex:none">${n}</div>
+     <div style="${VW==='d'?'margin-top:6px':'flex:1'}">${bar(v,'80%',3.5,v.ink)}${bar(v,'100%',3,v.dim,4)}</div></div>`).join('')}</div>`),
+ 'SEC-gallery':v=>sect(v,`${head(v,'Recent work',VW==='d'?13:11)}
+   <div style="display:grid;grid-template-columns:repeat(${VW==='d'?3:2},1fr);gap:5px;margin-top:9px">
+   ${[46,30,30,30,46,30].map(h=>img(v,VW==='d'?h:h*.85)).join('')}</div>`),
+ 'SEC-faq':v=>sect(v,`${head(v,'Questions',VW==='d'?13:11)}
+   <div style="margin-top:9px">${[1,2,3,4].map((_,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid ${v.line}">
+     ${bar(v,i===0?'62%':'52%',3.5,v.ink)}<div style="color:${v.acc};font:700 9px Inter,sans-serif">${i===0?'−':'+'}</div></div>
+     ${i===0?`<div style="padding-bottom:7px">${bar(v,'100%',3,v.dim,2)}${bar(v,'80%',3,v.dim,3)}</div>`:''}`).join('')}</div>`),
+ 'SEC-team':v=>sect(v,`${head(v,'Who you work with',VW==='d'?13:11)}
+   <div style="display:flex;gap:7px;margin-top:10px">${[1,2,3].map(()=>`<div style="flex:1;text-align:center">
+     <div style="width:26px;height:26px;border-radius:99px;background:${v.imgc};margin:0 auto"></div>
+     ${bar(v,'70%',3.5,v.ink,6)}<div style="height:3px;width:50%;margin:4px auto 0;background:${v.dim};border-radius:2px"></div></div>`).join('')}</div>`,v.surf),
+ 'SEC-map':v=>sect(v,`<div style="display:flex;flex-direction:${VW==='d'?'row':'column'};gap:9px">
+   <div style="flex:1.3">${img(v,VW==='d'?62:50)}</div>
+   <div style="flex:1">${head(v,'Visit us',VW==='d'?11:10)}${bar(v,'85%',3,v.dim,7)}${bar(v,'70%',3,v.dim,3)}${bar(v,'60%',3,v.dim,3)}
+   <div style="margin-top:7px">${btn(v,'Directions',1)}</div></div></div>`),
+ 'SEC-cta':v=>sect(v,`<div style="text-align:center">
+   <div style="font-family:${v.tf};font-size:${VW==='d'?13:11}px;color:${on(v.acc)}">Ready to start?</div>
+   <div style="height:3px;width:45%;margin:6px auto 9px;background:${mix(v.acc,on(v.acc),.35)};border-radius:2px"></div>
+   <span style="display:inline-block;background:${on(v.acc)};color:${v.acc};border-radius:${v.btnr};padding:5px 12px;font:600 7.5px Inter,sans-serif">Get a quote</span></div>`,v.acc),
+ 'SEC-feature':v=>sect(v,`<div style="display:flex;flex-direction:${VW==='d'?'row':'column'};gap:10px;align-items:center">
+   <div style="flex:1.2;width:100%">${img(v,VW==='d'?70:56)}</div>
+   <div style="flex:1;width:100%">${eyebrow(v,'Featured')}${head(v,'One thing, done well',VW==='d'?12:10)}
+   ${[1,2,3].map(()=>`<div style="display:flex;gap:5px;align-items:center;margin-top:5px">
+     <div style="width:5px;height:5px;border-radius:99px;background:${v.acc};flex:none"></div>${bar(v,'100%',3,v.dim)}</div>`).join('')}</div></div>`),
+ 'SEC-compare':v=>sect(v,`${head(v,'Compare',VW==='d'?13:11)}
+   <div style="margin-top:9px;border:${v.brd};border-radius:${v.rad};overflow:hidden">
+   ${[0,1,2,3].map(i=>`<div style="display:flex;background:${i===0?v.ink:(i%2?v.base:v.surf)}">
+     ${[1,2,3].map(c=>`<div style="flex:${c===1?1.4:1};padding:6px 7px;border-right:${c<3?`1px solid ${i===0?mix(v.ink,v.base,.25):v.line}`:'none'}">
+     <div style="height:3px;width:${c===1?'80%':'50%'};background:${i===0?mix(v.ink,v.base,.6):(c===1?v.ink:v.dim)};border-radius:2px"></div></div>`).join('')}</div>`).join('')}</div>`)
+};
+function wireFooter(v){
+  return `<div style="padding:${v.pad*.7}px ${v.gut}px;background:${v.ink}">
+    <div style="display:flex;justify-content:space-between;gap:10px">
+      <div style="flex:1"><div style="font-family:${v.tf};font-size:8px;color:${on(v.ink)};font-weight:700">LOGO</div>
+        ${bar(v,'80%',2.5,mix(v.ink,v.base,.4),6)}${bar(v,'60%',2.5,mix(v.ink,v.base,.4),3)}</div>
+      ${[1,2].map(()=>`<div style="flex:.7">${[1,2,3].map(()=>bar(v,'70%',2.5,mix(v.ink,v.base,.4),4)).join('')}</div>`).join('')}
+    </div></div>`;
+}
+function renderWire(){
+  const el=document.getElementById('wire');
+  if(!S.nav&&!S.hero&&!S.pal&&!S.sec.length){
+    el.style.width='100%';
+    el.innerHTML=`<div class="empty">Pick a nav, hero and palette and the page<br>builds itself here as you go.</div>`;return;
+  }
+  const v=V();
+  const body=`${wireNav(v)}${wireHero(v)}${S.sec.map(c=>SECR[c]?SECR[c](v):'').join('')}${wireFooter(v)}`;
+  const railed=S.nav==='NAV-F'
+    ? `<div style="display:flex;background:${v.base}">
+         <div style="width:34px;flex:none;border-right:1px solid ${v.line};padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:8px">
+           <div style="font-family:${v.tf};font-size:7px;font-weight:700;color:${v.ink}">LOGO</div>
+           ${[1,2,3,4].map(()=>bar(v,'16px',3,v.dim)).join('')}</div>
+         <div style="flex:1;min-width:0">${wireHero(v)}${S.sec.map(c=>SECR[c]?SECR[c](v):'').join('')}${wireFooter(v)}</div></div>`
+    : body;
+  el.style.width=v.W+'px';
+  el.innerHTML=`<div style="width:${v.W}px;background:${v.base};font-family:Inter,sans-serif">${railed}</div>`;
+}
+
+function render(){
+  ['nav','hero','type','pal','btn'].forEach(k=>{
+    document.querySelectorAll(`[data-g="${k}"]`).forEach(c=>c.classList.toggle('sel',c.dataset.c===S[k]));
+  });
+  renderSec();renderScale();
+  document.getElementById('out').value=out();
+  document.getElementById('inlinewrap').style.display = TAB==='build' ? 'flex' : 'none';
+  checkWarn();renderWire();
+}
+function copyOut(){navigator.clipboard.writeText(document.getElementById('out').value);
+  event.target.textContent='Copied ✓';setTimeout(()=>event.target.textContent='Copy',1200);}
+function dl(){
+  const c=(document.getElementById('cname').value||'client').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  const ind=document.getElementById('cind').value.trim(), what=document.getElementById('cwhat').value.trim();
+  const refline = REF&&S.adopted.size ? `\n## Adopted from a reference\n- Source: ${REF.source||''}\n- Taken: ${[...S.adopted].join(', ')}\n` : '';
+  const t=`# Design Spec — ${document.getElementById('cname').value||'<Client>'}\n\nAuthoritative. If the build drifts from these, the build is wrong.\nDefinitions for every code below are in design-system/presets.md, and the picker can inline them\ninto the build prompt if you are pasting into a session that has no repo.\n\n\`\`\`\n${specBlock()}\n\`\`\`\n\n## The business\n- Industry: ${ind||'⟨fill in⟩'}\n- What they sell: ${what||'⟨fill in — a name alone does not tell the model what this is⟩'}\n${refline}\n## Reference sites\n- Admires: \n- Dislikes (and why): \n- Competitors: \n\n## Notes\n- Logo file (SVG/AI/EPS): \n- Read check (R16): ${ind?`does this combination signal the right thing for ${ind}?`:'⟨fill in the industry above first⟩'}\n`;
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/markdown'}));
+  a.download=`design-spec-${c}.md`;a.click();
+}
+function reset(){Object.assign(S,{nav:null,hero:null,type:null,pal:null,btn:null,sec:[],DEN:null,RAD:null,MO:null,SHAD:null,IMG:null,accent:null,ov:{},adopted:new Set()});['r1','r2','r3'].forEach(i=>document.getElementById(i).value='');render();}
+
+['nav','hero','type','pal','btn'].forEach(renderGroup);
+document.addEventListener('click',e=>{
+  const card=e.target.closest('.card');
+  if(card){S[card.dataset.g]=S[card.dataset.g]===card.dataset.c?null:card.dataset.c;render();return;}
+  const sc=e.target.closest('[data-sec]');
+  if(sc){const v=sc.dataset.sec;const i=S.sec.indexOf(v);i>-1?S.sec.splice(i,1):S.sec.push(v);render();return;}
+  const sl=e.target.closest('[data-scale]');
+  if(sl){const k=sl.dataset.scale;S[k]=S[k]===sl.dataset.v?null:sl.dataset.v;render();return;}
+  const tb=e.target.closest('.tab');
+  if(tb){TAB=tb.dataset.t;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===tb));render();return;}
+  if(e.target.id==='inline'){INLINE=e.target.checked;render();return;}
+  const vwb=e.target.closest('[data-vw]');
+  if(vwb){VW=vwb.dataset.vw;document.querySelectorAll('[data-vw]').forEach(x=>x.classList.toggle('on',x===vwb));renderWire();}
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='acc'){S.accent=e.target.value.toUpperCase();document.getElementById('accv').textContent=S.accent;}
+  render();
+});
+render();
+</script>
+</body>
+</html>
